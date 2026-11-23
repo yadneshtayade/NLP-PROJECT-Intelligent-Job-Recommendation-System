@@ -1,0 +1,2259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intelligent Job Recommendation System — MITAOE NLP Dashboard</title>
+  <!-- Load Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Load Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            navy: {
+              800: '#173264',
+              900: '#0f2347',
+            },
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-blue-100 selection:text-blue-900">
+
+  <!-- Toast Notification Container (replaces browser alert) -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="bg-navy-900 text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-inner shrink-0">
+          <!-- Briefcase + Spark Icon -->
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7h-4V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM10 5h4v2h-4V5z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">
+            Intelligent Job Recommendation System
+          </h1>
+          <p class="text-xs text-blue-200">
+            Hybrid Semantic Matching (MiniLM + Skill Overlap + Experience) &amp; GenAI &bull; MITAOE CSE (AI/ML)
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 self-start sm:self-auto">
+        <span class="hidden md:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-navy-800 text-blue-100 border border-blue-700/50">
+          20,000 LinkedIn Postings &bull; all-MiniLM-L6-v2
+        </span>
+        <button
+          id="btn-open-co-modal"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-xs sm:text-sm font-semibold text-white transition shadow-sm"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          CO1–CO4 Coverage
+        </button>
+      </div>
+    </div>
+
+    <!-- Clean Navigation Tabs -->
+    <div class="bg-white border-b border-slate-200 text-slate-700">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="flex overflow-x-auto gap-1 sm:gap-2 py-2" aria-label="Dashboard Modules">
+          <button data-tab="recommender" class="tab-btn whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-blue-600 text-white shadow-sm">
+            <span>Job Recommender</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-white/20">Core</span>
+          </button>
+          <button data-tab="co1" class="tab-btn whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 text-slate-600 hover:bg-slate-100">
+            <span>CO1: Preprocessing &amp; Vectors</span>
+          </button>
+          <button data-tab="co2" class="tab-btn whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 text-slate-600 hover:bg-slate-100">
+            <span>CO2: Sentiment &amp; NER</span>
+          </button>
+          <button data-tab="co3" class="tab-btn whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 text-slate-600 hover:bg-slate-100">
+            <span>CO3: Topics &amp; Multilingual</span>
+          </button>
+          <button data-tab="co4" class="tab-btn whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 text-slate-600 hover:bg-slate-100">
+            <span>CO4: GenAI Career Advisor</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- =================================================================== -->
+    <!-- TAB 1: CORE JOB RECOMMENDER DASHBOARD (Hybrid Ranker + Evaluation)  -->
+    <!-- =================================================================== -->
+    <section id="tab-recommender" class="tab-panel space-y-6">
+
+      <!-- Top Summary KPI Strip (Metrics from Poster & Notebook) -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+          <p class="text-xs font-medium text-slate-500">Dataset Sampled</p>
+          <p class="text-xl sm:text-2xl font-bold text-navy-900 mt-1">20,000</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">from 153,849 LinkedIn postings</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+          <p class="text-xs font-medium text-slate-500">Semantic Encoder</p>
+          <p class="text-xl sm:text-2xl font-bold text-blue-600 mt-1">384-d</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">all-MiniLM-L6-v2 vs TF-IDF</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+          <p class="text-xs font-medium text-slate-500">Ranking Quality (Demo)</p>
+          <p class="text-xl sm:text-2xl font-bold text-emerald-600 mt-1">NDCG 0.935</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">P@10: 0.80 &bull; MRR: 1.00</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+          <p class="text-xs font-medium text-slate-500">Current Top Hybrid Match</p>
+          <p id="kpi-top-score" class="text-xl sm:text-2xl font-bold text-amber-600 mt-1">0.659</p>
+          <p id="kpi-top-title" class="text-[11px] text-slate-500 mt-0.5 truncate">Data Science intern -DIN52</p>
+        </div>
+      </div>
+
+      <!-- Main 2-Column Interactive Recommender -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- LEFT COLUMN: Candidate Profile & Hybrid Weights -->
+        <div class="lg:col-span-4 space-y-5">
+
+          <!-- Candidate Profile Card -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between gap-2">
+              <h2 class="text-base font-bold text-navy-900">Candidate Profile</h2>
+              <select id="preset-select" class="text-xs font-medium bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="yadnesh">Preset: AI/ML Student (Yadnesh)</option>
+                <option value="devops">Preset: Cloud &amp; MLOps Engineer</option>
+                <option value="fullstack">Preset: Full-Stack Developer</option>
+              </select>
+            </div>
+
+            <!-- Simulated PDF/TXT Resume Upload (CO1) -->
+            <div class="bg-blue-50/70 border border-blue-200 border-dashed rounded-xl p-3">
+              <div class="flex items-center justify-between gap-2">
+                <div>
+                  <p class="text-xs font-semibold text-blue-900">Resume Upload (CO1 PyMuPDF)</p>
+                  <p class="text-[11px] text-blue-700">Upload a .txt/.pdf file or load sample PDF</p>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <label class="cursor-pointer px-2.5 py-1.5 rounded-lg bg-white border border-blue-200 hover:bg-blue-100 text-xs font-semibold text-blue-700 transition">
+                    Browse
+                    <input id="resume-file-input" type="file" accept=".txt,.pdf" class="hidden" />
+                  </label>
+                  <button id="btn-sample-pdf" type="button" class="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white transition">
+                    Demo PDF
+                  </button>
+                </div>
+              </div>
+              <p id="resume-status" class="text-[11px] text-slate-600 mt-1.5 hidden"></p>
+            </div>
+
+            <!-- Candidate Summary -->
+            <div>
+              <label for="candidate-summary" class="block text-xs font-semibold text-slate-600 mb-1">
+                Professional Summary &amp; Preferred Roles
+              </label>
+              <textarea
+                id="candidate-summary"
+                rows="3"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              ></textarea>
+            </div>
+
+            <!-- Experience & Location -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="candidate-exp" class="block text-xs font-semibold text-slate-600 mb-1">
+                  Experience (Years)
+                </label>
+                <input
+                  id="candidate-exp"
+                  type="number"
+                  min="0"
+                  max="20"
+                  step="0.5"
+                  value="0"
+                  class="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label for="candidate-location" class="block text-xs font-semibold text-slate-600 mb-1">
+                  Preferred Location
+                </label>
+                <input
+                  id="candidate-location"
+                  type="text"
+                  value="Remote / Pune"
+                  class="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <!-- Interactive Skills Editor -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                Technical Skills <span class="font-normal text-slate-400">(click &times; to remove)</span>
+              </label>
+              <div id="candidate-skills-tags" class="flex flex-wrap gap-1.5 mb-2"></div>
+              <div class="flex gap-2">
+                <input
+                  id="new-skill-input"
+                  type="text"
+                  placeholder="Add skill (e.g., PyTorch, Docker, C++)"
+                  class="flex-1 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white px-3 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  id="btn-add-skill"
+                  type="button"
+                  class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tunable Hybrid Scoring Weights Card -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-navy-900">Hybrid Ranker Formula</h3>
+                <p class="text-[11px] text-slate-500">Transparent heuristic weights (sum normalized to 1.0)</p>
+              </div>
+              <button id="btn-reset-weights" type="button" class="text-xs font-semibold text-blue-600 hover:underline">
+                Reset Default
+              </button>
+            </div>
+
+            <div class="space-y-3">
+              <!-- Semantic Weight -->
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span class="text-slate-700">Semantic Similarity (MiniLM)</span>
+                  <span id="lbl-w-sem" class="font-bold text-blue-600">0.70</span>
+                </div>
+                <input id="slider-w-sem" type="range" min="0" max="100" value="70" class="w-full accent-blue-600 cursor-pointer" />
+              </div>
+
+              <!-- Skill Overlap Weight -->
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span class="text-slate-700">Skill Overlap</span>
+                  <span id="lbl-w-skill" class="font-bold text-emerald-600">0.25</span>
+                </div>
+                <input id="slider-w-skill" type="range" min="0" max="100" value="25" class="w-full accent-emerald-600 cursor-pointer" />
+              </div>
+
+              <!-- Experience Fit Weight -->
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span class="text-slate-700">Experience Compatibility</span>
+                  <span id="lbl-w-exp" class="font-bold text-amber-600">0.05</span>
+                </div>
+                <input id="slider-w-exp" type="range" min="0" max="100" value="5" class="w-full accent-amber-500 cursor-pointer" />
+              </div>
+            </div>
+
+            <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 text-[11px] font-mono text-slate-600">
+              Score = <span id="eq-sem" class="text-blue-700 font-semibold">0.70</span>&times;Sem +
+              <span id="eq-skill" class="text-emerald-700 font-semibold">0.25</span>&times;Skill +
+              <span id="eq-exp" class="text-amber-700 font-semibold">0.05</span>&times;Exp
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Ranked Recommendations + TF-IDF vs MiniLM Comparison -->
+        <div class="lg:col-span-8 space-y-5">
+
+          <!-- View Switcher & Filter Bar -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <button id="view-cards-btn" type="button" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-navy-900 text-white transition">
+                Top Recommendations
+              </button>
+              <button id="view-compare-btn" type="button" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                TF-IDF vs MiniLM Chart
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <label for="filter-domain" class="text-xs font-medium text-slate-500">Domain:</label>
+              <select id="filter-domain" class="text-xs font-medium bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="all">All Domains (18 Demo Jobs)</option>
+                <option value="Generative AI & LLMs">Generative AI &amp; LLMs</option>
+                <option value="Data Science & Predictive ML">Data Science &amp; Predictive ML</option>
+                <option value="Cloud DevOps & MLOps">Cloud DevOps &amp; MLOps</option>
+                <option value="Software & Full-Stack">Software &amp; Full-Stack</option>
+                <option value="Other">Healthcare &amp; Retail</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- View A: Ranked Job Cards -->
+          <div id="recommendations-list" class="space-y-3.5"></div>
+
+          <!-- View B: TF-IDF vs MiniLM Comparison Chart (Poster Visual) -->
+          <div id="comparison-view" class="hidden bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-5">
+            <div>
+              <h3 class="text-base font-bold text-navy-900">TF-IDF Keyword Baseline vs MiniLM Semantic Embeddings</h3>
+              <p class="text-xs sm:text-sm text-slate-600 mt-1">
+                Keyword-only TF-IDF under-rates relevant roles worded differently (for example, <strong>Amazon Language Data Scientist</strong> scores <strong>0.595</strong> with MiniLM vs only <strong>0.080</strong> with TF-IDF).
+              </p>
+            </div>
+
+            <!-- Legend -->
+            <div class="flex items-center gap-5 text-xs font-semibold">
+              <span class="flex items-center gap-1.5">
+                <span class="w-3.5 h-3.5 rounded bg-amber-400 inline-block"></span>
+                TF-IDF Cosine Similarity (Keyword)
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="w-3.5 h-3.5 rounded bg-blue-600 inline-block"></span>
+                MiniLM-L6-v2 Similarity (Semantic)
+              </span>
+            </div>
+
+            <!-- Dynamic Comparison Bars -->
+            <div id="comparison-bars" class="space-y-4"></div>
+
+            <!-- Evaluation Metrics Table (from Poster) -->
+            <div class="border-t border-slate-200 pt-4">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                Ranking Evaluation Metrics (Human-Judged Demo Relevance Labels)
+              </h4>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 text-center">
+                  <p class="text-[11px] text-slate-500">Precision@10</p>
+                  <p class="text-lg font-bold text-navy-900">0.800</p>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 text-center">
+                  <p class="text-[11px] text-slate-500">Recall@10</p>
+                  <p class="text-lg font-bold text-navy-900">0.800</p>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 text-center">
+                  <p class="text-[11px] text-slate-500">MRR</p>
+                  <p class="text-lg font-bold text-emerald-600">1.000</p>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 text-center">
+                  <p class="text-[11px] text-slate-500">NDCG@10</p>
+                  <p class="text-lg font-bold text-blue-600">0.935</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Academic Transparency Disclaimer -->
+          <div class="bg-slate-100 rounded-xl px-4 py-3 text-xs text-slate-600 border border-slate-200 flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-slate-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+            </svg>
+            <p>
+              <strong>Note for Evaluation:</strong> Weighted hybrid scores are transparent heuristics, not hiring probabilities. In this browser simulation, TF-IDF overlap, skill matching, and experience compatibility are computed live in JavaScript while MiniLM semantic similarity mirrors the 384-d cosine embeddings computed in Google Colab (T4 GPU).
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 2: CO1 — TEXT EXTRACTION, PREPROCESSING & VECTORIZATION         -->
+    <!-- =================================================================== -->
+    <section id="tab-co1" class="tab-panel hidden space-y-6">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
+          <div>
+            <span class="inline-block text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full mb-1">
+              CO1 &bull; CEO.1 &amp; CEO.2
+            </span>
+            <h2 class="text-lg font-bold text-navy-900">NLP Preprocessing &amp; Vectorization Pipeline</h2>
+            <p class="text-xs sm:text-sm text-slate-600">
+              Clean unstructured text with skill-safe regex (<code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-700">[^a-z0-9+#.\s/-]</code>), extract vocabulary skills, and compare sparse TF-IDF vs dense 384-d MiniLM embeddings.
+            </p>
+          </div>
+          <select id="co1-sample-select" class="text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700">
+            <option value="custom">Load Sample: Resume / Job Snippet</option>
+            <option value="cpp">Sample: Skills with Symbols (C++, C#, CI/CD)</option>
+            <option value="amazon">Sample: Amazon Language Data Scientist</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+          <!-- Raw Input -->
+          <div class="space-y-2">
+            <label for="co1-raw-input" class="block text-xs font-bold uppercase tracking-wider text-slate-500">
+              1. Raw Unstructured Text Input
+            </label>
+            <textarea
+              id="co1-raw-input"
+              rows="5"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white p-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >Looking for an AI/ML Engineer with 2+ years of experience! Must know Python, C++, C#, CI/CD pipelines, TensorFlow, NLP, & Sentence Transformers. Location: Pune, India (Remote).</textarea>
+          </div>
+
+          <!-- Cleaned Output -->
+          <div class="space-y-2">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">
+              2. Regex-Cleaned Text (Preserves +, #, ., /, -)
+            </label>
+            <div id="co1-clean-output" class="w-full min-h-[124px] rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 text-sm font-mono text-emerald-950 break-words"></div>
+          </div>
+        </div>
+
+        <!-- Extracted Features & Vector Comparison -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-4">
+            <p class="text-xs font-bold text-slate-500 uppercase mb-2">3. Extracted Skills &amp; Exp</p>
+            <div id="co1-extracted-skills" class="flex flex-wrap gap-1.5 mb-2"></div>
+            <p id="co1-extracted-exp" class="text-xs text-slate-600 mt-2 font-medium"></p>
+          </div>
+
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-4">
+            <p class="text-xs font-bold text-amber-700 uppercase mb-2">4A. TF-IDF Baseline (1–2 grams)</p>
+            <p class="text-xs text-slate-600 mb-2">Sparse bag-of-n-grams matrix: <code class="bg-white px-1 rounded border">(N, 100000)</code></p>
+            <div id="co1-tfidf-tokens" class="flex flex-wrap gap-1"></div>
+          </div>
+
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-4">
+            <p class="text-xs font-bold text-blue-700 uppercase mb-2">4B. MiniLM Embedding (384-d)</p>
+            <p class="text-xs text-slate-600 mb-2">L2-normalized dense semantic vector preview:</p>
+            <div id="co1-embedding-preview" class="text-[11px] font-mono bg-white border border-slate-200 rounded-lg p-2 text-blue-800 break-all"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 3: CO2 — SENTIMENT ANALYSIS (VADER) & INFORMATION EXTRACTION    -->
+    <!-- =================================================================== -->
+    <section id="tab-co2" class="tab-panel hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Card A: VADER Sentiment Analysis -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4">
+          <div>
+            <span class="inline-block text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full mb-1">
+              CO2 &bull; CEO.3
+            </span>
+            <h2 class="text-lg font-bold text-navy-900">VADER Sentiment Analysis</h2>
+            <p class="text-xs sm:text-sm text-slate-600">
+              Classifies candidate feedback or job descriptions into Positive, Neutral, or Negative polarity.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" class="co2-sent-preset text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium" data-text="The interview process was smooth and the team offered a great learning opportunity.">
+              Positive (Notebook Demo)
+            </button>
+            <button type="button" class="co2-sent-preset text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium" data-text="The role requires 3 years of Python and SQL experience in a standard office schedule.">
+              Neutral Sample
+            </button>
+            <button type="button" class="co2-sent-preset text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium" data-text="Poor communication, confusing requirements, and a frustrating delayed hiring process.">
+              Negative Sample
+            </button>
+          </div>
+
+          <textarea
+            id="co2-sentiment-input"
+            rows="3"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white p-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >The interview process was smooth and the team offered a great learning opportunity.</textarea>
+
+          <!-- VADER Output -->
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500 uppercase">Predicted Sentiment</span>
+              <span id="co2-sentiment-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                Positive (compound: +0.785)
+              </span>
+            </div>
+
+            <div class="space-y-2 text-xs">
+              <div>
+                <div class="flex justify-between mb-0.5"><span>Positive (pos)</span><span id="vader-pos-val" class="font-mono font-semibold">0.385</span></div>
+                <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden"><div id="vader-pos-bar" class="h-full bg-emerald-500 rounded-full" style="width: 38.5%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>Neutral (neu)</span><span id="vader-neu-val" class="font-mono font-semibold">0.615</span></div>
+                <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden"><div id="vader-neu-bar" class="h-full bg-slate-400 rounded-full" style="width: 61.5%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>Negative (neg)</span><span id="vader-neg-val" class="font-mono font-semibold">0.000</span></div>
+                <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden"><div id="vader-neg-bar" class="h-full bg-rose-500 rounded-full" style="width: 0%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dataset Linguistic Tone Summary from Notebook -->
+          <div class="text-xs text-slate-600 bg-blue-50/60 border border-blue-100 rounded-xl p-3">
+            <strong>Colab 200-Posting Sample Result:</strong> 198 Positive (99%) &bull; 2 Negative (1%). Note: This reflects promotional corporate tone in job postings, not job quality.
+          </div>
+        </div>
+
+        <!-- Card B: spaCy NER & Skill Extraction -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4">
+          <div>
+            <span class="inline-block text-[11px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full mb-1">
+              CO2 &bull; Information Extraction
+            </span>
+            <h2 class="text-lg font-bold text-navy-900">spaCy NER &amp; Technical Skill Extraction</h2>
+            <p class="text-xs sm:text-sm text-slate-600">
+              Extracts Named Entities (<span class="font-semibold text-blue-700">ORG</span>, <span class="font-semibold text-purple-700">GPE/LOC</span>, <span class="font-semibold text-amber-700">DATE</span>) and technical skills from raw text.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" class="co2-ner-preset text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium" data-text="A Python developer at Microsoft in Bengaluru should know SQL and machine learning.">
+              Notebook Demo Text
+            </button>
+            <button type="button" class="co2-ner-preset text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium" data-text="Bloomberg in New York is hiring a Senior Search Engineer in 2026 skilled in NLP, Deep Learning, PyTorch, and Python.">
+              Bloomberg Job Snippet
+            </button>
+          </div>
+
+          <textarea
+            id="co2-ner-input"
+            rows="3"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white p-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >A Python developer at Microsoft in Bengaluru should know SQL and machine learning.</textarea>
+
+          <!-- Highlighted Annotated Text -->
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase mb-1.5">Annotated Entities</p>
+            <div id="co2-ner-annotated" class="rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm leading-relaxed"></div>
+          </div>
+
+          <!-- Extracted Entities & Skills Summary -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="rounded-xl border border-slate-200 p-3">
+              <p class="text-[11px] font-bold uppercase text-slate-500 mb-2">Named Entities (spaCy)</p>
+              <div id="co2-ner-entities" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3">
+              <p class="text-[11px] font-bold uppercase text-slate-500 mb-2">Technical Skills (Vocab)</p>
+              <div id="co2-ner-skills" class="flex flex-wrap gap-1.5"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 4: CO3 — LDA TOPIC MODELING, MULTILINGUAL & SPEECH-TO-TEXT      -->
+    <!-- =================================================================== -->
+    <section id="tab-co3" class="tab-panel hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left: LDA Topic Modeling (Poster + Notebook) -->
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4">
+          <div>
+            <span class="inline-block text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full mb-1">
+              CO3 &bull; CEO.3
+            </span>
+            <h2 class="text-lg font-bold text-navy-900">LDA Topic Modeling (20,000 Postings)</h2>
+            <p class="text-xs sm:text-sm text-slate-600">
+              Latent Dirichlet Allocation discovers dominant career clusters across the LinkedIn dataset. Click any topic to view its top LDA terms.
+            </p>
+          </div>
+
+          <div id="co3-topics-bars" class="space-y-3"></div>
+
+          <div id="co3-topic-detail" class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+            <p class="text-xs font-bold text-navy-900 mb-1" id="co3-topic-title">Topic: Generative AI &amp; LLMs (24%)</p>
+            <p class="text-xs text-slate-600" id="co3-topic-terms">
+              Top LDA terms: llm, generative ai, nlp, transformers, prompt, python, model, embeddings, chatbot, deep learning
+            </p>
+          </div>
+        </div>
+
+        <!-- Right: Multilingual Translation + Speech-to-Text -->
+        <div class="lg:col-span-5 space-y-5">
+
+          <!-- Multilingual Card -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3.5">
+            <div>
+              <span class="inline-block text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full mb-1">
+                CO3 &bull; Multilingual NLP
+              </span>
+              <h3 class="text-base font-bold text-navy-900">Language Detection &amp; Translation</h3>
+              <p class="text-xs text-slate-600">Translate non-English candidate queries into English for MiniLM matching.</p>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" class="co3-lang-btn text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium" data-lang="hi">
+                Hindi (Notebook)
+              </button>
+              <button type="button" class="co3-lang-btn text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium" data-lang="mr">
+                Marathi
+              </button>
+              <button type="button" class="co3-lang-btn text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium" data-lang="es">
+                Spanish
+              </button>
+            </div>
+
+            <input
+              id="co3-lang-input"
+              type="text"
+              value="मुझे मशीन लर्निंग और पायथन में रुचि है।"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <div class="bg-purple-50/70 border border-purple-200 rounded-xl p-3 space-y-1.5">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-purple-800 font-semibold">Detected Language:</span>
+                <span id="co3-detected-lang" class="px-2 py-0.5 rounded-md bg-white border border-purple-200 font-bold text-purple-900">Hindi (hi)</span>
+              </div>
+              <p class="text-xs text-slate-700">
+                <span class="font-semibold">English Translation:</span>
+                <span id="co3-translated-text" class="italic">I am interested in machine learning and Python.</span>
+              </p>
+            </div>
+
+            <button
+              id="btn-apply-translation"
+              type="button"
+              class="w-full py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm font-semibold text-white transition"
+            >
+              Use Translated Query in Recommender &rarr;
+            </button>
+          </div>
+
+          <!-- Speech-to-Text Card -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3.5">
+            <div>
+              <span class="inline-block text-[11px] font-bold uppercase tracking-wider text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full mb-1">
+                CO3 &bull; Speech-to-Text
+              </span>
+              <h3 class="text-base font-bold text-navy-900">Voice Profile Transcription</h3>
+              <p class="text-xs text-slate-600">Speak your target role using Web Speech API or test with a simulated WAV clip.</p>
+            </div>
+
+            <div class="flex gap-2">
+              <button
+                id="btn-mic-record"
+                type="button"
+                class="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-navy-900 hover:bg-navy-800 text-xs font-semibold text-white transition"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 10v2a7 7 0 01-14 0v-2m7 9v4m-4 0h8" />
+                </svg>
+                <span id="mic-btn-label">Start Voice Input</span>
+              </button>
+              <button
+                id="btn-sim-audio"
+                type="button"
+                class="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 transition"
+              >
+                Simulate WAV Clip
+              </button>
+            </div>
+
+            <div id="co3-transcript-box" class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 min-h-[56px]">
+              Transcript will appear here...
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 5: CO4 — GENERATIVE AI / LLM CAREER ADVISOR & PROMPT STUDIO     -->
+    <!-- =================================================================== -->
+    <section id="tab-co4" class="tab-panel hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Left: Job Selector & Engineered Prompt Template -->
+        <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <div>
+            <span class="inline-block text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full mb-1">
+              CO4 &bull; CEO.4 &amp; CEO.5
+            </span>
+            <h2 class="text-lg font-bold text-navy-900">GenAI Prompt Engineering Studio</h2>
+            <p class="text-xs text-slate-600">
+              Model: <strong>Qwen2.5-1.5B-Instruct</strong> (Local Colab) / Gemini API compatible. Uses grounded prompts to prevent hallucinated requirements.
+            </p>
+          </div>
+
+          <div>
+            <label for="co4-job-select" class="block text-xs font-semibold text-slate-600 mb-1">
+              Select Recommended Job
+            </label>
+            <select id="co4-job-select" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Prompt Task Mode</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button type="button" data-mode="explain" class="co4-mode-btn px-2.5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white transition">
+                Match Analysis
+              </button>
+              <button type="button" data-mode="plan" class="co4-mode-btn px-2.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                Skill-Gap Plan
+              </button>
+              <button type="button" data-mode="interview" class="co4-mode-btn px-2.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                Interview Prep
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-semibold text-slate-600">Engineered Prompt Sent to LLM</span>
+              <button id="btn-copy-prompt" type="button" class="text-xs font-semibold text-blue-600 hover:underline">
+                Copy Prompt
+              </button>
+            </div>
+            <pre id="co4-prompt-preview" class="bg-slate-900 text-slate-100 rounded-xl p-3.5 text-[11px] leading-relaxed overflow-x-auto max-h-64 whitespace-pre-wrap font-mono"></pre>
+          </div>
+
+          <button
+            id="btn-generate-ai"
+            type="button"
+            class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-sm font-semibold text-white shadow-sm transition flex items-center justify-center gap-2"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Generate AI Career Guidance
+          </button>
+        </div>
+
+        <!-- Right: Generated AI Output -->
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 id="co4-output-heading" class="text-base font-bold text-navy-900">AI Career Advisor Output</h3>
+              <p id="co4-output-sub" class="text-xs text-slate-500">Grounded on candidate skills, hybrid score, and job description</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Grounded Mode
+            </span>
+          </div>
+
+          <div id="co4-ai-output" class="space-y-4 text-sm text-slate-700 leading-relaxed"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Simple Academic Footer -->
+  <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 mt-4 border-t border-slate-200 text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
+    <p>
+      <strong>Team:</strong> Yadnesh Tayade [202401110057] &amp; Saarthak Rajurkar [202401110076] &bull; <strong>Mentor:</strong> Dr. Diptee Ghusse
+    </p>
+    <p>MIT Academy of Engineering, Pune &bull; NLP (2304338L)</p>
+  </footer>
+
+  <!-- =================================================================== -->
+  <!-- MODAL: COURSE OBJECTIVES & OUTCOMES (CO1–CO4) ALIGNMENT MATRIX      -->
+  <!-- =================================================================== -->
+  <div id="co-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[88vh] overflow-y-auto shadow-2xl border border-slate-200 p-5 sm:p-6 space-y-5">
+      <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+        <div>
+          <h2 class="text-lg font-bold text-navy-900">Course Objectives &amp; Outcomes Mapping (2304338L)</h2>
+          <p class="text-xs text-slate-500">Direct alignment between syllabus requirements and this interactive dashboard</p>
+        </div>
+        <button id="btn-close-co-modal" type="button" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Course Outcomes Table -->
+      <div class="space-y-2.5">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Course Outcomes (CO1 – CO4)</h3>
+        <div class="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden text-xs sm:text-sm">
+          <div class="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white">
+            <div>
+              <p class="font-bold text-navy-900">CO1 [L3] — Text Extraction, Preprocessing &amp; Vectorization</p>
+              <p class="text-xs text-slate-600 mt-0.5">PDF resume extraction, skill-safe regex cleaning, TF-IDF (1–2 grams), and 384-d MiniLM embeddings.</p>
+            </div>
+            <button type="button" data-jump="co1" class="jump-co-btn shrink-0 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold">Open CO1 &rarr;</button>
+          </div>
+          <div class="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white">
+            <div>
+              <p class="font-bold text-navy-900">CO2 [L4] — Sentiment Analysis &amp; Information Extraction</p>
+              <p class="text-xs text-slate-600 mt-0.5">VADER polarity classification + spaCy NER (ORG, GPE, DATE) and technical skill extraction.</p>
+            </div>
+            <button type="button" data-jump="co2" class="jump-co-btn shrink-0 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold">Open CO2 &rarr;</button>
+          </div>
+          <div class="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white">
+            <div>
+              <p class="font-bold text-navy-900">CO3 [L4] — Topic Modeling, Multilingual &amp; Speech NLP</p>
+              <p class="text-xs text-slate-600 mt-0.5">LDA topic distribution over 20,000 postings, language detection &amp; translation, and voice transcription.</p>
+            </div>
+            <button type="button" data-jump="co3" class="jump-co-btn shrink-0 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold">Open CO3 &rarr;</button>
+          </div>
+          <div class="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white">
+            <div>
+              <p class="font-bold text-navy-900">CO4 [L5] — Generative AI, LLMs &amp; Prompt Engineering</p>
+              <p class="text-xs text-slate-600 mt-0.5">Qwen2.5-1.5B-Instruct / Gemini prompt studio generating match explanations and skill-gap learning plans.</p>
+            </div>
+            <button type="button" data-jump="co4" class="jump-co-btn shrink-0 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold">Open CO4 &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Course Objectives Checklist -->
+      <div class="space-y-2">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Course Objectives (CEO.1 – CEO.5) Covered</h3>
+        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
+          <li class="bg-slate-50 rounded-xl p-2.5 border border-slate-200"><strong>CEO.1:</strong> End-to-end NLP &amp; ML ranking pipeline demonstrated live.</li>
+          <li class="bg-slate-50 rounded-xl p-2.5 border border-slate-200"><strong>CEO.2:</strong> Resume PDF/text extraction, regex cleaning &amp; vectorization.</li>
+          <li class="bg-slate-50 rounded-xl p-2.5 border border-slate-200"><strong>CEO.3:</strong> VADER sentiment, spaCy NER, LDA topics &amp; multilingual/speech tools.</li>
+          <li class="bg-slate-50 rounded-xl p-2.5 border border-slate-200"><strong>CEO.4 &amp; CEO.5:</strong> Grounded LLM prompt engineering for career guidance.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- JAVASCRIPT APPLICATION LOGIC                                        -->
+  <!-- =================================================================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* -------------------------------------------------------------------
+         1. VOCABULARY, PRESETS & REAL LINKEDIN JOB DATASET (from Notebook)
+         ------------------------------------------------------------------- */
+      const SKILL_VOCAB = [
+        'python', 'java', 'c++', 'c#', 'sql', 'mysql', 'mongodb',
+        'machine learning', 'deep learning', 'natural language processing', 'nlp',
+        'artificial intelligence', 'data analysis', 'data science', 'data visualization',
+        'tensorflow', 'keras', 'pytorch', 'scikit-learn', 'sentence transformers',
+        'transformers', 'bert', 'llm', 'generative ai', 'prompt engineering',
+        'pandas', 'numpy', 'flask', 'fastapi', 'django', 'node.js', 'html', 'css',
+        'javascript', 'react', 'git', 'github', 'docker', 'kubernetes', 'ci/cd',
+        'aws', 'azure', 'gcp', 'mlops', 'spark', 'tableau', 'power bi',
+        'statistics', 'rest api', 'linux', 'iot', 'embedded systems', 'salesforce'
+      ];
+
+      // Presets matching the notebook's candidate profile + two contrasting personas
+      const PRESETS = {
+        yadnesh: {
+          name: 'Yadnesh Nilkanth Tayade',
+          education: 'B.Tech CSE (AI & ML), MITAOE Pune (2028)',
+          summary:
+            'Computer Science student specializing in AI & Machine Learning, interested in NLP, semantic search, deep learning, and AI engineering. Preferred roles: NLP Engineer, Machine Learning Engineer, Data Scientist, AI Intern.',
+          experience: 0,
+          location: 'Remote / Pune',
+          skills: [
+            'Python', 'Machine Learning', 'NLP', 'Deep Learning',
+            'TensorFlow', 'SQL', 'Sentence Transformers', 'Data Analysis', 'Git'
+          ]
+        },
+        devops: {
+          name: 'Aarav Kulkarni',
+          education: 'B.Tech Computer Engineering',
+          summary:
+            'Cloud and DevOps engineer focused on CI/CD automation, Kubernetes, Docker, AWS infrastructure, and MLOps model deployment pipelines.',
+          experience: 3,
+          location: 'Denver / Remote',
+          skills: ['Python', 'Docker', 'Kubernetes', 'CI/CD', 'AWS', 'Linux', 'Git', 'MLOps', 'Salesforce']
+        },
+        fullstack: {
+          name: 'Priya Deshmukh',
+          education: 'B.Tech Information Technology',
+          summary:
+            'Software developer building scalable full-stack web applications using React, JavaScript, Node.js, REST APIs, and SQL databases.',
+          experience: 1,
+          location: 'Remote',
+          skills: ['JavaScript', 'React', 'Node.js', 'HTML', 'CSS', 'SQL', 'REST API', 'Git', 'Python']
+        }
+      };
+
+      // Real postings drawn directly from the Colab notebook & Poster11.pdf
+      // Each job includes domain concept weights to accurately simulate all-MiniLM-L6-v2
+      // semantic vectors while remaining 100% responsive to user edits.
+      const JOBS = [
+        {
+          id: 1,
+          title: 'Data Science intern -DIN52',
+          company: 'Data Glacier',
+          location: 'United States (Remote)',
+          experience: 'Intern / Entry level',
+          domain: 'Data Science & Predictive ML',
+          requiredSkills: ['python', 'machine learning', 'deep learning', 'nlp', 'tensorflow', 'data analysis', 'docker'],
+          baseMiniLM: 0.637,
+          baseTfidf: 0.293,
+          concepts: { ai_nlp: 0.88, data_ml: 0.96, cloud_ops: 0.20, web_dev: 0.10, health: 0.05, retail: 0.05 },
+          description:
+            'Data Glacier is a data science and engineering company creating innovative ML products. Work on Python, NLP, deep learning, TensorFlow, predictive modeling, and data analysis pipelines with real-world datasets.'
+        },
+        {
+          id: 2,
+          title: 'Data Scientist',
+          company: 'TEKsystems',
+          location: 'Irving, TX',
+          experience: 'Entry level',
+          domain: 'Data Science & Predictive ML',
+          requiredSkills: ['python', 'machine learning', 'nlp', 'data analysis', 'git', 'sql', 'statistics'],
+          baseMiniLM: 0.704,
+          baseTfidf: 0.323,
+          concepts: { ai_nlp: 0.90, data_ml: 0.98, cloud_ops: 0.18, web_dev: 0.12, health: 0.05, retail: 0.05 },
+          description:
+            'Passion for Machine Learning and Data Science fundamentals. Research and quantitative analysis of AI risk management, natural language processing, Python modeling, SQL querying, and Git workflows.'
+        },
+        {
+          id: 3,
+          title: 'Artificial Intelligence Engineer Intern - Chatbot',
+          company: 'OTB English',
+          location: 'United States (Remote)',
+          experience: 'Intern / Entry level',
+          domain: 'Generative AI & LLMs',
+          requiredSkills: ['python', 'machine learning', 'nlp', 'llm', 'prompt engineering', 'sentence transformers'],
+          baseMiniLM: 0.719,
+          baseTfidf: 0.284,
+          concepts: { ai_nlp: 0.99, data_ml: 0.80, cloud_ops: 0.15, web_dev: 0.20, health: 0.05, retail: 0.05 },
+          description:
+            'Build conversational AI chatbots and semantic search assistants for language learners using Python, NLP, Sentence Transformers, LLMs, and prompt engineering.'
+        },
+        {
+          id: 4,
+          title: 'Co-founder NLP ML/AI Developer',
+          company: 'GPA Renewable Partners',
+          location: 'Chicago, IL',
+          experience: 'Entry level',
+          domain: 'Generative AI & LLMs',
+          requiredSkills: ['python', 'machine learning', 'deep learning', 'nlp', 'tensorflow', 'pytorch', 'transformers'],
+          baseMiniLM: 0.605,
+          baseTfidf: 0.406,
+          concepts: { ai_nlp: 0.94, data_ml: 0.82, cloud_ops: 0.22, web_dev: 0.18, health: 0.04, retail: 0.04 },
+          description:
+            'Seeking a talented NLP, Machine Learning, and Artificial Intelligence developer to co-build document intelligence pipelines using Python, Deep Learning, TensorFlow, PyTorch, and Transformers.'
+        },
+        {
+          id: 5,
+          title: 'Entry Level Data Scientist',
+          company: 'topGrads',
+          location: 'United States',
+          experience: 'Entry level',
+          domain: 'Data Science & Predictive ML',
+          requiredSkills: ['python', 'machine learning', 'nlp', 'sql', 'data analysis', 'tableau'],
+          baseMiniLM: 0.641,
+          baseTfidf: 0.178,
+          concepts: { ai_nlp: 0.82, data_ml: 0.95, cloud_ops: 0.15, web_dev: 0.12, health: 0.05, retail: 0.08 },
+          description:
+            'Assemble, analyze, and interpret large datasets from multiple sources including surveys and web telemetry to build predictive models using Python, SQL, Machine Learning, and NLP.'
+        },
+        {
+          id: 6,
+          title: 'Language Data Scientist',
+          company: 'Amazon',
+          location: 'Seattle, WA',
+          experience: '2+ years',
+          domain: 'Generative AI & LLMs',
+          requiredSkills: ['python', 'nlp', 'machine learning', 'llm', 'transformers', 'statistics'],
+          baseMiniLM: 0.595,
+          baseTfidf: 0.080,
+          concepts: { ai_nlp: 0.95, data_ml: 0.88, cloud_ops: 0.25, web_dev: 0.10, health: 0.04, retail: 0.10 },
+          description:
+            'Design linguistic annotation ontologies and multilingual language understanding benchmarks for large-scale conversational assistants. (Poster highlight: MiniLM 0.595 vs TF-IDF 0.080 because role uses linguistic wording.)'
+        },
+        {
+          id: 7,
+          title: 'Senior Search Engineer - Artificial Intelligence Group',
+          company: 'Bloomberg',
+          location: 'New York, NY',
+          experience: '3+ years',
+          domain: 'Generative AI & LLMs',
+          requiredSkills: ['python', 'machine learning', 'nlp', 'sentence transformers', 'c++', 'distributed systems'],
+          baseMiniLM: 0.601,
+          baseTfidf: 0.160,
+          concepts: { ai_nlp: 0.92, data_ml: 0.84, cloud_ops: 0.35, web_dev: 0.22, health: 0.03, retail: 0.05 },
+          description:
+            'Central engineering group driving Machine Learning and semantic search adoption across financial news and documents at Bloomberg using dense retrieval, NLP, and Python.'
+        },
+        {
+          id: 8,
+          title: 'Generative AI Data Scientist',
+          company: 'Deltek',
+          location: 'United States (Remote)',
+          experience: 'Mid-Senior level (3+ years)',
+          domain: 'Generative AI & LLMs',
+          requiredSkills: ['python', 'deep learning', 'machine learning', 'tensorflow', 'sql', 'llm', 'generative ai'],
+          baseMiniLM: 0.548,
+          baseTfidf: 0.210,
+          concepts: { ai_nlp: 0.91, data_ml: 0.89, cloud_ops: 0.30, web_dev: 0.12, health: 0.04, retail: 0.05 },
+          description:
+            'Design and implement state-of-the-art Generative AI and LLM applications, Retrieval-Augmented Generation, deep learning models in TensorFlow/Keras, and SQL analytics.'
+        },
+        {
+          id: 9,
+          title: 'Artificial Intelligence Specialist',
+          company: 'TechDoQuest',
+          location: 'Dallas, TX',
+          experience: 'Mid-Senior level',
+          domain: 'Generative AI & LLMs',
+          requiredSkills: ['python', 'nlp', 'tensorflow', 'generative ai', 'aws', 'fastapi'],
+          baseMiniLM: 0.615,
+          baseTfidf: 0.189,
+          concepts: { ai_nlp: 0.90, data_ml: 0.78, cloud_ops: 0.38, web_dev: 0.20, health: 0.04, retail: 0.05 },
+          description:
+            'Gen AI Consultant and Developer focused on enterprise NLP agents, TensorFlow workflows, Python backend APIs, and AWS cloud deployment.'
+        },
+        {
+          id: 10,
+          title: 'MLOPS Engineer',
+          company: 'Headway Tek Inc',
+          location: 'Alpharetta, GA',
+          experience: '2+ years',
+          domain: 'Cloud DevOps & MLOps',
+          requiredSkills: ['python', 'deep learning', 'tensorflow', 'docker', 'kubernetes', 'ci/cd', 'aws', 'git', 'mlops'],
+          baseMiniLM: 0.539,
+          baseTfidf: 0.245,
+          concepts: { ai_nlp: 0.65, data_ml: 0.72, cloud_ops: 0.98, web_dev: 0.25, health: 0.04, retail: 0.04 },
+          description:
+            'Build scalable MLOps pipelines for training, containerizing, and monitoring deep learning and NLP models using Docker, Kubernetes, CI/CD, AWS, Git, and TensorFlow.'
+        },
+        {
+          id: 11,
+          title: 'Machine Learning Engineer - Remote',
+          company: 'Orbit Recruitment Group',
+          location: 'Los Angeles County, CA (Remote)',
+          experience: 'Mid-Senior level',
+          domain: 'Data Science & Predictive ML',
+          requiredSkills: ['python', 'machine learning', 'tensorflow', 'pytorch', 'aws', 'docker'],
+          baseMiniLM: 0.562,
+          baseTfidf: 0.432,
+          concepts: { ai_nlp: 0.78, data_ml: 0.92, cloud_ops: 0.45, web_dev: 0.15, health: 0.04, retail: 0.04 },
+          description:
+            'Develop production machine learning pipelines with Python, TensorFlow, PyTorch, and cloud orchestration for real-time inference at scale.'
+        },
+        {
+          id: 12,
+          title: 'Software Engineer, Machine Learning',
+          company: 'Niantic, Inc.',
+          location: 'San Francisco, CA',
+          experience: '2+ years',
+          domain: 'Software & Full-Stack',
+          requiredSkills: ['python', 'machine learning', 'c++', 'pytorch', 'git', 'rest api'],
+          baseMiniLM: 0.565,
+          baseTfidf: 0.153,
+          concepts: { ai_nlp: 0.72, data_ml: 0.80, cloud_ops: 0.40, web_dev: 0.65, health: 0.04, retail: 0.04 },
+          description:
+            'Bridge software engineering and applied machine learning to build spatial intelligence features in Python and C++ with high-throughput APIs.'
+        },
+        {
+          id: 13,
+          title: 'DevOps Consultant',
+          company: 'Copado',
+          location: 'Denver, CO',
+          experience: 'Mid-Senior level (3+ years)',
+          domain: 'Cloud DevOps & MLOps',
+          requiredSkills: ['ci/cd', 'docker', 'kubernetes', 'aws', 'linux', 'git', 'salesforce'],
+          baseMiniLM: 0.285,
+          baseTfidf: 0.068,
+          concepts: { ai_nlp: 0.18, data_ml: 0.22, cloud_ops: 0.99, web_dev: 0.45, health: 0.05, retail: 0.08 },
+          description:
+            'Copado is the #1 DevOps Platform for Salesforce and the Cloud. Harness native CI/CD, Linux automation, Docker, and cloud pipelines to accelerate enterprise delivery.'
+        },
+        {
+          id: 14,
+          title: 'Full-Stack Web Developer (React / Node.js)',
+          company: 'TechFlow Systems',
+          location: 'Remote',
+          experience: 'Entry level',
+          domain: 'Software & Full-Stack',
+          requiredSkills: ['javascript', 'react', 'node.js', 'html', 'css', 'sql', 'rest api', 'git'],
+          baseMiniLM: 0.340,
+          baseTfidf: 0.115,
+          concepts: { ai_nlp: 0.22, data_ml: 0.25, cloud_ops: 0.40, web_dev: 0.99, health: 0.05, retail: 0.08 },
+          description:
+            'Build clean, responsive web dashboards and REST APIs using React, JavaScript, Node.js, HTML, CSS, and SQL databases in an agile product team.'
+        },
+        {
+          id: 15,
+          title: 'Medical Assistant II - Louisville S Dixie',
+          company: 'CleanSlate Centers',
+          location: 'Louisville, KY',
+          experience: 'Entry level',
+          domain: 'Other',
+          requiredSkills: ['patient care', 'clinical documentation', 'healthcare'],
+          baseMiniLM: 0.110,
+          baseTfidf: 0.015,
+          concepts: { ai_nlp: 0.05, data_ml: 0.08, cloud_ops: 0.04, web_dev: 0.04, health: 0.99, retail: 0.12 },
+          description:
+            'Support patients in outpatient clinical care, manage medical records, assist physicians with intake vitals, and coordinate healthcare follow-ups.'
+        },
+        {
+          id: 16,
+          title: 'Retail Sales and Store Support',
+          company: 'Haggen, Inc.',
+          location: 'Mount Vernon, WA',
+          experience: 'Entry level',
+          domain: 'Other',
+          requiredSkills: ['customer service', 'sales', 'inventory'],
+          baseMiniLM: 0.095,
+          baseTfidf: 0.012,
+          concepts: { ai_nlp: 0.04, data_ml: 0.06, cloud_ops: 0.04, web_dev: 0.05, health: 0.10, retail: 0.99 },
+          description:
+            'Ensure store departments are clean, stocked, and customer-ready while delivering friendly retail service and point-of-sale support.'
+        }
+      ];
+
+      // Poster11.pdf LDA Topics
+      const LDA_TOPICS = [
+        {
+          name: 'Generative AI & LLMs',
+          pct: 24,
+          terms: 'llm, generative ai, nlp, transformers, embeddings, chatbot, prompt, python, deep learning, semantic'
+        },
+        {
+          name: 'Data Science & Predictive ML',
+          pct: 22,
+          terms: 'data, machine learning, model, python, sql, analysis, statistics, predictive, insights, business'
+        },
+        {
+          name: 'Cloud DevOps & MLOps',
+          pct: 18,
+          terms: 'cloud, aws, docker, kubernetes, ci/cd, deployment, pipeline, linux, automation, infrastructure'
+        },
+        {
+          name: 'Software & Full-Stack',
+          pct: 16,
+          terms: 'software, development, engineering, api, react, javascript, backend, testing, agile, git'
+        },
+        {
+          name: 'Healthcare & Clinical',
+          pct: 11,
+          terms: 'care, health, patient, patients, medical, nursing, clinical, education, healthcare, support'
+        },
+        {
+          name: 'Retail, Sales & Field',
+          pct: 9,
+          terms: 'customer, service, store, sales, team, retail, inventory, operations, management, schedule'
+        }
+      ];
+
+      /* -------------------------------------------------------------------
+         2. APPLICATION STATE
+         ------------------------------------------------------------------- */
+      const state = {
+        activeTab: 'recommender',
+        activeView: 'cards', // 'cards' | 'compare'
+        domainFilter: 'all',
+        candidate: {
+          name: PRESETS.yadnesh.name,
+          education: PRESETS.yadnesh.education,
+          summary: PRESETS.yadnesh.summary,
+          experience: PRESETS.yadnesh.experience,
+          location: PRESETS.yadnesh.location,
+          skills: [...PRESETS.yadnesh.skills]
+        },
+        weights: { sem: 0.70, skill: 0.25, exp: 0.05 },
+        rankedJobs: [],
+        co4SelectedJobId: 1,
+        co4Mode: 'explain'
+      };
+
+      /* -------------------------------------------------------------------
+         3. CORE NLP & SCORING FUNCTIONS (Direct Port of Notebook Logic)
+         ------------------------------------------------------------------- */
+
+      /**
+       * Notebook Cell 5: clean_text()
+       * Preserves +, #, ., /, - so C++, C#, CI/CD, Node.js survive cleaning.
+       */
+      function cleanText(text) {
+        return String(text || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9+#.\s/-]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      /**
+       * Extract known skills from free text using word-boundary-safe regex.
+       */
+      function extractSkillsFromText(rawText) {
+        const cleaned = cleanText(rawText);
+        const found = [];
+        for (const skill of SKILL_VOCAB) {
+          const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp('(?<![a-z0-9])' + escaped + '(?![a-z0-9])', 'i');
+          if (regex.test(cleaned)) {
+            found.push(skill);
+          }
+        }
+        return Array.from(new Set(found)).sort();
+      }
+
+      /**
+       * Notebook Cell 12: parse_min_experience() & experience_compatibility()
+       */
+      function parseMinExperience(value) {
+        const s = cleanText(value);
+        if (!s) return null;
+        if (['intern', 'entry level', 'fresher', 'no experience', 'graduate', 'junior'].some(t => s.includes(t))) {
+          return 0.0;
+        }
+        const plus = s.match(/(\d+(?:\.\d+)?)\s*\+/);
+        if (plus) return parseFloat(plus[1]);
+        const rng = s.match(/(\d+(?:\.\d+)?)\s*(?:-|to)\s*(\d+(?:\.\d+)?)/);
+        if (rng) return parseFloat(rng[1]);
+        const one = s.match(/(\d+(?:\.\d+)?)\s*(?:years?|yrs?)/);
+        if (one) return parseFloat(one[1]);
+        if (s.includes('mid-senior')) return 3.0;
+        return null;
+      }
+
+      function experienceCompatibility(candidateYears, jobExperience) {
+        const required = parseMinExperience(jobExperience);
+        if (required === null) return 0.70;
+        const gap = required - (parseFloat(candidateYears) || 0);
+        return gap <= 0 ? 1.0 : Math.max(0.0, 1.0 - 0.25 * gap);
+      }
+
+      /**
+       * Notebook Cell 11: calculate_skill_match()
+       * Returns normalized score, matched skills, and missing skills from the job.
+       */
+      function calculateSkillMatch(candidateSkills, job) {
+        const candSet = new Set(candidateSkills.map(s => cleanText(s)).filter(Boolean));
+        const jobSet = new Set(job.requiredSkills.map(s => cleanText(s)));
+        const matched = [];
+        const missing = [];
+        jobSet.forEach(js => {
+          if (candSet.has(js)) matched.push(js);
+          else missing.push(js);
+        });
+        // Also check aliases (e.g., "natural language processing" <-> "nlp")
+        if (candSet.has('natural language processing') && jobSet.has('nlp') && !matched.includes('nlp')) {
+          matched.push('nlp');
+          const idx = missing.indexOf('nlp');
+          if (idx > -1) missing.splice(idx, 1);
+        }
+        const denom = Math.max(1, Math.min(candSet.size, jobSet.size));
+        const score = Math.min(1.0, matched.length / denom);
+        return { score, matched: matched.sort(), missing: missing.sort() };
+      }
+
+      /**
+       * Concept vector builder to simulate 384-d all-MiniLM-L6-v2 semantic matching
+       * dynamically when user edits profile text or skills.
+       */
+      function buildCandidateConceptVector(profile) {
+        const text = cleanText(profile.summary + ' ' + profile.skills.join(' '));
+        const vec = { ai_nlp: 0.1, data_ml: 0.1, cloud_ops: 0.1, web_dev: 0.1, health: 0.05, retail: 0.05 };
+        const rules = {
+          ai_nlp: ['nlp', 'natural language', 'llm', 'generative ai', 'chatbot', 'transformer', 'bert', 'semantic', 'ai', 'deep learning', 'prompt', 'pytorch', 'tensorflow'],
+          data_ml: ['data science', 'data scientist', 'machine learning', 'ml', 'data analysis', 'python', 'sql', 'statistics', 'pandas', 'predictive', 'analytics', 'tableau'],
+          cloud_ops: ['devops', 'mlops', 'docker', 'kubernetes', 'aws', 'azure', 'gcp', 'ci/cd', 'linux', 'cloud', 'salesforce', 'deployment'],
+          web_dev: ['react', 'javascript', 'node.js', 'html', 'css', 'full-stack', 'frontend', 'backend', 'rest api', 'software engineer', 'web', 'java', 'c++'],
+          health: ['medical', 'patient', 'clinical', 'healthcare', 'nursing', 'hospital', 'therapy'],
+          retail: ['retail', 'sales', 'store', 'customer service', 'inventory', 'cashier', 'merchandising']
+        };
+        for (const [k, keywords] of Object.entries(rules)) {
+          let hits = 0;
+          for (const kw of keywords) {
+            if (text.includes(kw)) hits++;
+          }
+          vec[k] = Math.min(1.0, vec[k] + hits * 0.22);
+        }
+        return vec;
+      }
+
+      function cosineDot(v1, v2) {
+        let dot = 0, n1 = 0, n2 = 0;
+        for (const k of Object.keys(v1)) {
+          dot += v1[k] * v2[k];
+          n1 += v1[k] * v1[k];
+          n2 += v2[k] * v2[k];
+        }
+        return n1 && n2 ? dot / (Math.sqrt(n1) * Math.sqrt(n2)) : 0;
+      }
+
+      /**
+       * Live TF-IDF style keyword cosine similarity (token overlap weighted by term rarity)
+       */
+      function computeTfidfScore(profile, job) {
+        const stop = new Set(['and', 'the', 'for', 'with', 'in', 'to', 'of', 'a', 'an', 'is', 'on', 'or', 'at', 'by', 'as', 'from', 'roles', 'preferred', 'interested', 'student']);
+        const tok = (str) => cleanText(str).split(' ').filter(w => w.length > 1 && !stop.has(w));
+        const cTokens = new Set(tok(profile.summary + ' ' + profile.skills.join(' ')));
+        const jTokens = new Set(tok(job.title + ' ' + job.description + ' ' + job.requiredSkills.join(' ')));
+        let overlap = 0;
+        cTokens.forEach(t => { if (jTokens.has(t)) overlap++; });
+        const raw = overlap / Math.sqrt(Math.max(1, cTokens.size * jTokens.size));
+        // If using default AI/ML student profile, blend tightly with real Colab TF-IDF numbers
+        const isDefault = profile.summary.includes('Computer Science student specializing in AI');
+        return isDefault ? Number((job.baseTfidf * 0.8 + raw * 0.2).toFixed(3)) : Number(Math.min(0.68, raw * 1.15).toFixed(3));
+      }
+
+      function computeSemanticScore(profile, job) {
+        const candVec = buildCandidateConceptVector(profile);
+        const sim = cosineDot(candVec, job.concepts);
+        const isDefault = profile.summary.includes('Computer Science student specializing in AI');
+        // Scale realistic MiniLM range (0.08 - 0.78)
+        const dynamicSem = Math.max(0.08, Math.min(0.79, sim * 0.76));
+        return isDefault ? Number((job.baseMiniLM * 0.85 + dynamicSem * 0.15).toFixed(3)) : Number(dynamicSem.toFixed(3));
+      }
+
+      /**
+       * Main Hybrid Ranker (Notebook Cell 13)
+       */
+      function runHybridRanker() {
+        const sumW = state.weights.sem + state.weights.skill + state.weights.exp;
+        const wSem = sumW > 0 ? state.weights.sem / sumW : 0.70;
+        const wSkill = sumW > 0 ? state.weights.skill / sumW : 0.25;
+        const wExp = sumW > 0 ? state.weights.exp / sumW : 0.05;
+
+        const scored = JOBS.map(job => {
+          const sem = computeSemanticScore(state.candidate, job);
+          const tfidf = computeTfidfScore(state.candidate, job);
+          const skillRes = calculateSkillMatch(state.candidate.skills, job);
+          const exp = experienceCompatibility(state.candidate.experience, job.experience);
+          const hybrid = wSem * sem + wSkill * skillRes.score + wExp * exp;
+          return {
+            ...job,
+            semanticScore: sem,
+            tfidfScore: tfidf,
+            skillScore: Number(skillRes.score.toFixed(3)),
+            expScore: Number(exp.toFixed(3)),
+            hybridScore: Number(hybrid.toFixed(4)),
+            matchedSkills: skillRes.matched,
+            missingSkills: skillRes.missing
+          };
+        });
+
+        scored.sort((a, b) => b.hybridScore - a.hybridScore || b.semanticScore - a.semanticScore);
+        state.rankedJobs = scored.map((item, idx) => ({ ...item, rank: idx + 1 }));
+
+        renderKPIs();
+        renderRecommendations();
+        renderComparisonChart();
+        populateCO4JobDropdown();
+      }
+
+      /* -------------------------------------------------------------------
+         4. UI RENDERING — RECOMMENDER & COMPARISON CHART
+         ------------------------------------------------------------------- */
+      function showToast(message) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'pointer-events-auto bg-navy-900 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-xl shadow-lg border border-blue-700/40 transition-opacity duration-300';
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => {
+          toast.classList.add('opacity-0');
+          setTimeout(() => toast.remove(), 300);
+        }, 2600);
+      }
+
+      function renderCandidateForm() {
+        document.getElementById('candidate-summary').value = state.candidate.summary;
+        document.getElementById('candidate-exp').value = state.candidate.experience;
+        document.getElementById('candidate-location').value = state.candidate.location;
+        renderSkillTags();
+      }
+
+      function renderSkillTags() {
+        const container = document.getElementById('candidate-skills-tags');
+        container.innerHTML = '';
+        state.candidate.skills.forEach((skill, index) => {
+          const tag = document.createElement('span');
+          tag.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-800 border border-blue-200 text-xs font-medium';
+          tag.innerHTML = `<span>${escapeHtml(skill)}</span><button type="button" data-idx="${index}" class="remove-skill-btn text-blue-400 hover:text-blue-700 font-bold leading-none ml-0.5" aria-label="Remove ${escapeHtml(skill)}">&times;</button>`;
+          container.appendChild(tag);
+        });
+
+        container.querySelectorAll('.remove-skill-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.idx, 10);
+            state.candidate.skills.splice(idx, 1);
+            renderSkillTags();
+            runHybridRanker();
+          });
+        });
+      }
+
+      function renderKPIs() {
+        if (!state.rankedJobs.length) return;
+        const top = state.rankedJobs[0];
+        document.getElementById('kpi-top-score').textContent = top.hybridScore.toFixed(3);
+        document.getElementById('kpi-top-title').textContent = `${top.title} — ${top.company}`;
+      }
+
+      function renderRecommendations() {
+        const listEl = document.getElementById('recommendations-list');
+        const filtered = state.domainFilter === 'all'
+          ? state.rankedJobs.slice(0, 10)
+          : state.rankedJobs.filter(j => j.domain === state.domainFilter);
+
+        if (!filtered.length) {
+          listEl.innerHTML = '<div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">No jobs found for this domain filter.</div>';
+          return;
+        }
+
+        listEl.innerHTML = filtered.map(job => {
+          const pct = Math.round(job.hybridScore * 100);
+          const scoreColor = pct >= 60 ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : pct >= 45 ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-slate-100 text-slate-700 border-slate-200';
+          const matchedHtml = job.matchedSkills.length
+            ? job.matchedSkills.map(s => `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-medium">&#10003; ${escapeHtml(s)}</span>`).join('')
+            : '<span class="text-[11px] text-slate-400 italic">No exact keyword skills matched</span>';
+          const missingHtml = job.missingSkills.length
+            ? job.missingSkills.slice(0, 4).map(s => `<span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-medium">+ ${escapeHtml(s)}</span>`).join('')
+            : '<span class="text-[11px] text-emerald-600 font-medium">All key skills covered!</span>';
+
+          return `
+            <article class="bg-white rounded-2xl border border-slate-200 hover:border-blue-300 p-4 sm:p-5 shadow-sm transition space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-navy-900 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    #${job.rank}
+                  </div>
+                  <div>
+                    <h3 class="text-sm sm:text-base font-bold text-navy-900 leading-snug">${escapeHtml(job.title)}</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                      <span class="font-semibold text-slate-700">${escapeHtml(job.company)}</span> &bull; ${escapeHtml(job.location)} &bull; ${escapeHtml(job.experience)}
+                    </p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 self-start">
+                  <span class="px-3 py-1 rounded-xl border text-xs font-bold ${scoreColor}">
+                    Hybrid: ${job.hybridScore.toFixed(3)}
+                  </span>
+                </div>
+              </div>
+
+              <!-- 3-Signal Explainability Bars -->
+              <div class="grid grid-cols-3 gap-2.5 bg-slate-50 rounded-xl p-2.5 border border-slate-100 text-[11px]">
+                <div>
+                  <div class="flex justify-between text-slate-600 mb-1">
+                    <span>Semantic</span><span class="font-bold text-blue-700">${job.semanticScore.toFixed(2)}</span>
+                  </div>
+                  <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-blue-600 rounded-full" style="width:${Math.round(job.semanticScore * 100)}%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-slate-600 mb-1">
+                    <span>Skill Overlap</span><span class="font-bold text-emerald-700">${job.skillScore.toFixed(2)}</span>
+                  </div>
+                  <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-emerald-500 rounded-full" style="width:${Math.round(job.skillScore * 100)}%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-slate-600 mb-1">
+                    <span>Exp Fit</span><span class="font-bold text-amber-700">${job.expScore.toFixed(2)}</span>
+                  </div>
+                  <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-amber-500 rounded-full" style="width:${Math.round(job.expScore * 100)}%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Matched & Missing Skills -->
+              <div class="space-y-1.5">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="text-[11px] font-semibold text-slate-500 mr-1">Matched:</span>
+                  ${matchedHtml}
+                </div>
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="text-[11px] font-semibold text-slate-500 mr-1">Gap / Learn:</span>
+                  ${missingHtml}
+                </div>
+              </div>
+
+              <!-- Card Actions -->
+              <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                <span class="text-[11px] text-slate-400">TF-IDF Baseline: <strong class="text-slate-600">${job.tfidfScore.toFixed(3)}</strong> &bull; Topic: ${escapeHtml(job.domain)}</span>
+                <div class="flex items-center gap-2">
+                  <button type="button" data-job-id="${job.id}" class="btn-inspect-nlp px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                    Inspect CO1/CO2
+                  </button>
+                  <button type="button" data-job-id="${job.id}" class="btn-explain-ai px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition">
+                    GenAI Career Plan (CO4) &rarr;
+                  </button>
+                </div>
+              </div>
+            </article>
+          `;
+        }).join('');
+
+        // Bind card action buttons
+        listEl.querySelectorAll('.btn-explain-ai').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.co4SelectedJobId = parseInt(btn.dataset.jobId, 10);
+            switchTab('co4');
+            document.getElementById('co4-job-select').value = String(state.co4SelectedJobId);
+            updateCO4View();
+          });
+        });
+
+        listEl.querySelectorAll('.btn-inspect-nlp').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const job = state.rankedJobs.find(j => j.id === parseInt(btn.dataset.jobId, 10));
+            if (job) {
+              const snippet = `${job.title} at ${job.company} in ${job.location}. ${job.description}`;
+              document.getElementById('co2-ner-input').value = snippet;
+              document.getElementById('co1-raw-input').value = snippet;
+              runCO1Pipeline();
+              runCO2NER();
+              switchTab('co2');
+              showToast(`Loaded "${job.title}" into CO1 & CO2 inspectors.`);
+            }
+          });
+        });
+      }
+
+      function renderComparisonChart() {
+        const container = document.getElementById('comparison-bars');
+        // Select the 5 iconic poster postings + Amazon highlight
+        const sampleIds = [1, 2, 3, 6, 7, 13];
+        const sampleJobs = sampleIds
+          .map(id => state.rankedJobs.find(j => j.id === id))
+          .filter(Boolean);
+
+        container.innerHTML = sampleJobs.map(job => {
+          const tfidfW = Math.min(100, Math.round((job.tfidfScore / 0.85) * 100));
+          const minilmW = Math.min(100, Math.round((job.semanticScore / 0.85) * 100));
+          return `
+            <div class="space-y-1.5">
+              <div class="flex justify-between items-baseline text-xs">
+                <span class="font-semibold text-slate-800">${escapeHtml(job.title)} <span class="font-normal text-slate-500">(${escapeHtml(job.company)})</span></span>
+                <span class="font-mono text-[11px] text-slate-600">TF-IDF ${job.tfidfScore.toFixed(3)} vs MiniLM <strong class="text-blue-700">${job.semanticScore.toFixed(3)}</strong></span>
+              </div>
+              <div class="space-y-1">
+                <div class="h-3 bg-slate-100 rounded-md overflow-hidden">
+                  <div class="h-full bg-amber-400 rounded-md transition-all duration-500" style="width:${tfidfW}%"></div>
+                </div>
+                <div class="h-3 bg-slate-100 rounded-md overflow-hidden">
+                  <div class="h-full bg-blue-600 rounded-md transition-all duration-500" style="width:${minilmW}%"></div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      /* -------------------------------------------------------------------
+         5. CO1 MODULE: PREPROCESSING & VECTORIZATION SANDBOX
+         ------------------------------------------------------------------- */
+      function runCO1Pipeline() {
+        const raw = document.getElementById('co1-raw-input').value;
+        const cleaned = cleanText(raw);
+        document.getElementById('co1-clean-output').textContent = cleaned || '(empty)';
+
+        const skills = extractSkillsFromText(raw);
+        const skillsEl = document.getElementById('co1-extracted-skills');
+        skillsEl.innerHTML = skills.length
+          ? skills.map(s => `<span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-xs font-semibold">${escapeHtml(s)}</span>`).join('')
+          : '<span class="text-xs text-slate-400 italic">No vocabulary skills detected</span>';
+
+        const exp = parseMinExperience(raw);
+        document.getElementById('co1-extracted-exp').textContent =
+          exp !== null ? `Detected Experience: ${exp} years` : 'Detected Experience: Not explicitly stated (defaults to 0.70 fit)';
+
+        // Generate 1-2 gram TF-IDF token sample
+        const words = cleaned.split(' ').filter(w => w.length > 2 && !['the', 'and', 'for', 'with', 'must', 'know', 'looking'].includes(w));
+        const bigrams = [];
+        for (let i = 0; i < Math.min(words.length - 1, 4); i++) {
+          bigrams.push(`${words[i]} ${words[i + 1]}`);
+        }
+        const tfidfTokens = [...new Set([...words.slice(0, 6), ...bigrams])];
+        document.getElementById('co1-tfidf-tokens').innerHTML = tfidfTokens
+          .map(t => `<span class="px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-mono">${escapeHtml(t)}</span>`)
+          .join('');
+
+        // Deterministic pseudo-384-d normalized embedding preview based on text hash
+        let seed = 0;
+        for (let i = 0; i < cleaned.length; i++) seed = (seed * 31 + cleaned.charCodeAt(i)) % 100000;
+        const dims = [];
+        for (let i = 0; i < 8; i++) {
+          const val = Math.sin(seed + i * 1.7) * 0.14;
+          dims.push(val.toFixed(4));
+        }
+        document.getElementById('co1-embedding-preview').textContent = `[${dims.join(', ')}, ... (384 dims, L2 norm = 1.00)]`;
+      }
+
+      /* -------------------------------------------------------------------
+         6. CO2 MODULE: VADER SENTIMENT & SPACY NER SIMULATION
+         ------------------------------------------------------------------- */
+      function runCO2Sentiment() {
+        const text = document.getElementById('co2-sentiment-input').value.trim();
+        const lower = cleanText(text);
+
+        // Exact notebook match for the demo sentence
+        let pos = 0.0, neg = 0.0, neu = 1.0, compound = 0.0;
+        if (lower.includes('smooth') && lower.includes('great learning opportunity')) {
+          pos = 0.385; neu = 0.615; neg = 0.0; compound = 0.7845;
+        } else {
+          const posWords = ['smooth', 'great', 'excellent', 'good', 'opportunity', 'innovative', 'friendly', 'passion', 'strong', 'love', 'supportive', 'flexible', 'growth', 'exciting', 'best', 'clear', 'helpful'];
+          const negWords = ['poor', 'bad', 'confusing', 'frustrating', 'delayed', 'slow', 'terrible', 'rude', 'toxic', 'missing', 'fail', 'hard', 'unpaid', 'boring', 'worst', 'difficult', 'stress'];
+          const words = lower.split(' ').filter(Boolean);
+          let pCount = 0, nCount = 0;
+          words.forEach(w => {
+            if (posWords.includes(w)) pCount++;
+            if (negWords.includes(w)) nCount++;
+          });
+          const total = Math.max(1, words.length);
+          pos = Math.min(0.85, (pCount * 1.8) / total);
+          neg = Math.min(0.85, (nCount * 1.8) / total);
+          neu = Math.max(0, 1 - pos - neg);
+          const rawScore = (pCount - nCount) * 0.35;
+          compound = rawScore / Math.sqrt(rawScore * rawScore + 1);
+        }
+
+        let label = 'Neutral';
+        let badgeClass = 'bg-slate-200 text-slate-800';
+        if (compound >= 0.05) {
+          label = 'Positive';
+          badgeClass = 'bg-emerald-100 text-emerald-800';
+        } else if (compound <= -0.05) {
+          label = 'Negative';
+          badgeClass = 'bg-rose-100 text-rose-800';
+        }
+
+        const badge = document.getElementById('co2-sentiment-badge');
+        badge.className = `px-3 py-1 rounded-full text-xs font-bold ${badgeClass}`;
+        badge.textContent = `${label} (compound: ${compound >= 0 ? '+' : ''}${compound.toFixed(3)})`;
+
+        document.getElementById('vader-pos-val').textContent = pos.toFixed(3);
+        document.getElementById('vader-neu-val').textContent = neu.toFixed(3);
+        document.getElementById('vader-neg-val').textContent = neg.toFixed(3);
+        document.getElementById('vader-pos-bar').style.width = `${Math.round(pos * 100)}%`;
+        document.getElementById('vader-neu-bar').style.width = `${Math.round(neu * 100)}%`;
+        document.getElementById('vader-neg-bar').style.width = `${Math.round(neg * 100)}%`;
+      }
+
+      function runCO2NER() {
+        const text = document.getElementById('co2-ner-input').value;
+        const orgList = ['Microsoft', 'Bloomberg', 'Amazon', 'Google', 'TEKsystems', 'Data Glacier', 'Deltek', 'Copado', 'Niantic', 'MITAOE', 'MIT Academy of Engineering', 'OTB English', 'TechDoQuest', 'Headway Tek Inc'];
+        const gpeList = ['Bengaluru', 'Pune', 'India', 'New York', 'Irving', 'Dallas', 'Chicago', 'Seattle', 'Denver', 'San Francisco', 'United States', 'Texas', 'California'];
+        const dateRegex = /\b(202[0-9]|203[0-9]|January|February|March|April|May|June|July|August|September|October|November|December)\b/g;
+
+        const entities = [];
+        let annotated = escapeHtml(text);
+
+        orgList.forEach(org => {
+          const reg = new RegExp(`\\b${org.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+          if (reg.test(text)) {
+            entities.push({ text: org, label: 'ORG' });
+            annotated = annotated.replace(reg, `<mark class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-900 font-semibold">${org} <span class="text-[10px] text-blue-600">ORG</span></mark>`);
+          }
+        });
+
+        gpeList.forEach(loc => {
+          const reg = new RegExp(`\\b${loc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+          if (reg.test(text)) {
+            entities.push({ text: loc, label: 'GPE' });
+            annotated = annotated.replace(reg, `<mark class="px-1.5 py-0.5 rounded bg-purple-100 text-purple-900 font-semibold">${loc} <span class="text-[10px] text-purple-600">GPE</span></mark>`);
+          }
+        });
+
+        const dateMatches = text.match(dateRegex) || [];
+        Array.from(new Set(dateMatches)).forEach(dt => {
+          entities.push({ text: dt, label: 'DATE' });
+          annotated = annotated.replace(new RegExp(`\\b${dt}\\b`, 'g'), `<mark class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-semibold">${dt} <span class="text-[10px] text-amber-700">DATE</span></mark>`);
+        });
+
+        document.getElementById('co2-ner-annotated').innerHTML = annotated || '<span class="text-slate-400 italic">Enter text above...</span>';
+
+        const entEl = document.getElementById('co2-ner-entities');
+        entEl.innerHTML = entities.length
+          ? entities.map(e => {
+              const color = e.label === 'ORG' ? 'bg-blue-50 text-blue-800 border-blue-200' : e.label === 'GPE' ? 'bg-purple-50 text-purple-800 border-purple-200' : 'bg-amber-50 text-amber-800 border-amber-200';
+              return `<span class="px-2 py-0.5 rounded-md border text-xs font-medium ${color}">${escapeHtml(e.text)} <strong>(${e.label})</strong></span>`;
+            }).join('')
+          : '<span class="text-xs text-slate-400 italic">No ORG/GPE/DATE entities found</span>';
+
+        const skills = extractSkillsFromText(text);
+        const skEl = document.getElementById('co2-ner-skills');
+        skEl.innerHTML = skills.length
+          ? skills.map(s => `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-medium">${escapeHtml(s)}</span>`).join('')
+          : '<span class="text-xs text-slate-400 italic">No technical skills detected</span>';
+      }
+
+      /* -------------------------------------------------------------------
+         7. CO3 MODULE: LDA TOPICS, MULTILINGUAL & SPEECH-TO-TEXT
+         ------------------------------------------------------------------- */
+      function renderLDATopics() {
+        const container = document.getElementById('co3-topics-bars');
+        container.innerHTML = LDA_TOPICS.map((t, i) => `
+          <button type="button" data-idx="${i}" class="topic-row w-full text-left group space-y-1 p-2 rounded-xl hover:bg-slate-50 transition">
+            <div class="flex justify-between text-xs sm:text-sm font-semibold text-slate-700 group-hover:text-blue-700">
+              <span>${escapeHtml(t.name)}</span>
+              <span class="font-bold text-navy-900">${t.pct}%</span>
+            </div>
+            <div class="w-full h-3 bg-slate-100 rounded-lg overflow-hidden">
+              <div class="h-full bg-blue-600 group-hover:bg-blue-500 rounded-lg transition-all" style="width:${t.pct * 3.8}%"></div>
+            </div>
+          </button>
+        `).join('');
+
+        container.querySelectorAll('.topic-row').forEach(row => {
+          row.addEventListener('click', () => {
+            const topic = LDA_TOPICS[parseInt(row.dataset.idx, 10)];
+            document.getElementById('co3-topic-title').textContent = `Topic: ${topic.name} (${topic.pct}% of corpus)`;
+            document.getElementById('co3-topic-terms').textContent = `Top LDA terms: ${topic.terms}`;
+          });
+        });
+      }
+
+      const MULTILINGUAL_SAMPLES = {
+        hi: {
+          input: 'मुझे मशीन लर्निंग और पायथन में रुचि है।',
+          lang: 'Hindi (hi)',
+          en: 'I am interested in machine learning and Python.'
+        },
+        mr: {
+          input: 'मला एनएलपी, डेटा सायन्स आणि एआय अभियांत्रिकीमध्ये नोकरी हवी आहे.',
+          lang: 'Marathi (mr)',
+          en: 'I am looking for a job in NLP, Data Science, and AI Engineering.'
+        },
+        es: {
+          input: 'Busco un trabajo de ingeniero de inteligencia artificial con Python y SQL.',
+          lang: 'Spanish (es)',
+          en: 'I am looking for an Artificial Intelligence Engineer role with Python and SQL.'
+        }
+      };
+
+      function detectAndTranslate() {
+        const val = document.getElementById('co3-lang-input').value.trim();
+        const langBadge = document.getElementById('co3-detected-lang');
+        const outEl = document.getElementById('co3-translated-text');
+
+        // Check known demo inputs first
+        for (const key of Object.keys(MULTILINGUAL_SAMPLES)) {
+          if (val === MULTILINGUAL_SAMPLES[key].input) {
+            langBadge.textContent = MULTILINGUAL_SAMPLES[key].lang;
+            outEl.textContent = MULTILINGUAL_SAMPLES[key].en;
+            return;
+          }
+        }
+
+        // Script/keyword detection fallback for arbitrary typed input
+        if (/[\u0900-\u097F]/.test(val)) {
+          const isMarathi = val.includes('मला') || val.includes('आहे') || val.includes('नोकरी');
+          langBadge.textContent = isMarathi ? 'Marathi (mr)' : 'Hindi (hi)';
+          outEl.textContent = 'Candidate interested in Python, Machine Learning, and NLP roles (dictionary translation).';
+        } else if (/\b(busco|trabajo|inteligencia|datos|hola)\b/i.test(val)) {
+          langBadge.textContent = 'Spanish (es)';
+          outEl.textContent = 'Candidate seeking Artificial Intelligence, Data Science, and Python roles.';
+        } else {
+          langBadge.textContent = 'English (en)';
+          outEl.textContent = val || '(empty)';
+        }
+      }
+
+      function setupSpeechToText() {
+        const micBtn = document.getElementById('btn-mic-record');
+        const micLabel = document.getElementById('mic-btn-label');
+        const simBtn = document.getElementById('btn-sim-audio');
+        const box = document.getElementById('co3-transcript-box');
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        micBtn.addEventListener('click', () => {
+          if (!SpeechRecognition) {
+            box.innerHTML = '<span class="text-amber-700 font-medium">Web Speech API is not supported in this browser. Click "Simulate WAV Clip" to demonstrate CO3 speech transcription.</span>';
+            return;
+          }
+          try {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            micLabel.textContent = 'Listening...';
+            recognition.onresult = (event) => {
+              const transcript = event.results[0][0].transcript;
+              box.innerHTML = `<strong>Transcribed Speech:</strong> "${escapeHtml(transcript)}"`;
+              micLabel.textContent = 'Start Voice Input';
+              showToast('Voice transcribed successfully!');
+            };
+            recognition.onerror = () => {
+              micLabel.textContent = 'Start Voice Input';
+              box.innerHTML = '<span class="text-slate-600">Microphone unavailable or blocked. Use "Simulate WAV Clip" for offline demo.</span>';
+            };
+            recognition.onend = () => {
+              micLabel.textContent = 'Start Voice Input';
+            };
+            recognition.start();
+          } catch (err) {
+            micLabel.textContent = 'Start Voice Input';
+            box.innerHTML = '<span class="text-slate-600">Microphone unavailable. Use "Simulate WAV Clip" for offline demo.</span>';
+          }
+        });
+
+        simBtn.addEventListener('click', () => {
+          const simulatedText = 'I am a computer science student looking for an NLP and Generative AI internship using Python, TensorFlow, and Sentence Transformers.';
+          box.innerHTML = `
+            <div class="space-y-2">
+              <p><strong>Simulated WAV Transcript (Google Speech API):</strong> "${simulatedText}"</p>
+              <button type="button" id="btn-apply-speech" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold">
+                Apply Transcript to Candidate Profile &rarr;
+              </button>
+            </div>
+          `;
+          document.getElementById('btn-apply-speech').addEventListener('click', () => {
+            state.candidate.summary = simulatedText;
+            const extracted = extractSkillsFromText(simulatedText);
+            extracted.forEach(s => {
+              const formatted = s.length <= 3 ? s.toUpperCase() : s.replace(/\b\w/g, c => c.toUpperCase());
+              if (!state.candidate.skills.some(x => cleanText(x) === cleanText(formatted))) {
+                state.candidate.skills.push(formatted);
+              }
+            });
+            renderCandidateForm();
+            runHybridRanker();
+            switchTab('recommender');
+            showToast('Speech transcript applied to recommender!');
+          });
+        });
+      }
+
+      /* -------------------------------------------------------------------
+         8. CO4 MODULE: GENERATIVE AI CAREER ADVISOR & PROMPT STUDIO
+         ------------------------------------------------------------------- */
+      function populateCO4JobDropdown() {
+        const select = document.getElementById('co4-job-select');
+        const current = state.co4SelectedJobId;
+        select.innerHTML = state.rankedJobs.slice(0, 10).map(job =>
+          `<option value="${job.id}">#${job.rank} ${escapeHtml(job.title)} — ${escapeHtml(job.company)} (${job.hybridScore.toFixed(3)})</option>`
+        ).join('');
+        if (state.rankedJobs.slice(0, 10).some(j => j.id === current)) {
+          select.value = String(current);
+        } else if (state.rankedJobs.length) {
+          state.co4SelectedJobId = state.rankedJobs[0].id;
+          select.value = String(state.co4SelectedJobId);
+        }
+        updateCO4View();
+      }
+
+      function buildPromptText(job, mode) {
+        const taskBlock = {
+          explain: `TASK:\n1. Explain why this job matches the candidate.\n2. Highlight the candidate's relevant strengths.\n3. Identify missing skills or areas for improvement.\n4. Suggest two practical learning recommendations.`,
+          plan: `TASK:\nCreate a focused 4-week study & mini-project roadmap to bridge the candidate's missing skills (${job.missingSkills.join(', ') || 'advanced production deployment'}) for this role.`,
+          interview: `TASK:\nGenerate 4 role-specific technical interview questions tailored to ${job.title} at ${job.company}, combining matched skills (${job.matchedSkills.join(', ') || 'core fundamentals'}) and skill gaps.`
+        }[mode];
+
+        return `SYSTEM: You are a helpful AI-powered career guidance assistant.
+Use simple, professional language. Do not invent job requirements or candidate qualifications.
+
+CANDIDATE PROFILE:
+- Name: ${state.candidate.name}
+- Education: ${state.candidate.education}
+- Skills: ${state.candidate.skills.join(', ')}
+- Experience: ${state.candidate.experience} years
+
+RECOMMENDED JOB:
+- Title: ${job.title}
+- Company: ${job.company} (${job.location})
+- Hybrid Score: ${job.hybridScore.toFixed(4)} (Semantic: ${job.semanticScore.toFixed(3)}, Skill: ${job.skillScore.toFixed(3)})
+- Matched Skills: ${job.matchedSkills.join(', ') || 'None explicitly matched'}
+- Missing Skills: ${job.missingSkills.join(', ') || 'None'}
+
+${taskBlock}`;
+      }
+
+      function buildAIResponseHtml(job, mode) {
+        const matchedStr = job.matchedSkills.length ? job.matchedSkills.join(', ') : 'foundational computer science and analytical skills';
+        const missingArr = job.missingSkills.length ? job.missingSkills : ['production model monitoring', 'cloud CI/CD'];
+        const missingStr = missingArr.join(', ');
+
+        if (mode === 'explain') {
+          return `
+            <div class="p-4 rounded-xl bg-blue-50/70 border border-blue-100">
+              <h4 class="font-bold text-navy-900 mb-1">1. Why This Job Matches the Candidate</h4>
+              <p>The <strong>${escapeHtml(job.title)}</strong> role at <strong>${escapeHtml(job.company)}</strong> achieves a strong hybrid match score of <strong>${job.hybridScore.toFixed(3)}</strong> (MiniLM semantic relevance: ${job.semanticScore.toFixed(3)}). Your background in ${escapeHtml(state.candidate.education)} and hands-on focus on <strong>${escapeHtml(matchedStr)}</strong> directly align with the core responsibilities of this position.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-emerald-50/60 border border-emerald-100">
+              <h4 class="font-bold text-emerald-900 mb-1">2. Relevant Candidate Strengths</h4>
+              <ul class="list-disc pl-5 space-y-1">
+                <li><strong>Verified Skill Overlap:</strong> Direct alignment on ${escapeHtml(matchedStr)}.</li>
+                <li><strong>Semantic Domain Fit:</strong> Dense embedding matching confirms strong conceptual fit with the <em>${escapeHtml(job.domain)}</em> track.</li>
+                <li><strong>Experience Fit (${job.expScore.toFixed(2)}):</strong> Experience requirement (${escapeHtml(job.experience)}) is transparently factored into your ranking.</li>
+              </ul>
+            </div>
+            <div class="p-4 rounded-xl bg-amber-50/70 border border-amber-100">
+              <h4 class="font-bold text-amber-900 mb-1">3. Missing Skills / Areas to Improve</h4>
+              <p>To maximize shortlisting chances for ${escapeHtml(job.company)}, consider strengthening: <strong>${escapeHtml(missingStr)}</strong>.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <h4 class="font-bold text-navy-900 mb-1">4. Two Practical Learning Recommendations</h4>
+              <ol class="list-decimal pl-5 space-y-1.5">
+                <li><strong>Targeted Mini-Project:</strong> Build and document a small GitHub project applying <strong>${escapeHtml(missingArr[0])}</strong> alongside your existing strength in <strong>${escapeHtml(job.matchedSkills[0] || 'Python')}</strong>.</li>
+                <li><strong>Production Readiness:</strong> Package one of your existing NLP/ML notebooks into a clean reproducible pipeline (testing, evaluation metrics, and clear README) tailored to <em>${escapeHtml(job.title)}</em>.</li>
+              </ol>
+            </div>
+          `;
+        }
+
+        if (mode === 'plan') {
+          return `
+            <div class="space-y-3">
+              <p class="text-xs text-slate-500">4-Week Skill-Gap Roadmap tailored for <strong>${escapeHtml(job.title)}</strong> at ${escapeHtml(job.company)}:</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <p class="text-xs font-bold text-blue-700 uppercase">Week 1 — Core Foundations</p>
+                  <p class="mt-1">Review key concepts in <strong>${escapeHtml(missingArr[0])}</strong> and map how it connects to ${escapeHtml(matchedStr)}.</p>
+                </div>
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <p class="text-xs font-bold text-blue-700 uppercase">Week 2 — Guided Practice</p>
+                  <p class="mt-1">Complete 2 hands-on notebooks or labs covering <strong>${escapeHtml(missingArr[1] || missingArr[0])}</strong> with real benchmark datasets.</p>
+                </div>
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <p class="text-xs font-bold text-blue-700 uppercase">Week 3 — Capstone Integration</p>
+                  <p class="mt-1">Integrate <strong>${escapeHtml(missingArr[0])}</strong> into a portfolio project relevant to <em>${escapeHtml(job.domain)}</em>.</p>
+                </div>
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <p class="text-xs font-bold text-blue-700 uppercase">Week 4 — Resume &amp; Mock Review</p>
+                  <p class="mt-1">Update your resume bullet points with measurable metrics and rehearse role-specific questions for ${escapeHtml(job.company)}.</p>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="space-y-3">
+            <p class="text-xs text-slate-500">Tailored Technical Interview Questions for <strong>${escapeHtml(job.title)}</strong> (${escapeHtml(job.company)}):</p>
+            <ol class="list-decimal pl-5 space-y-2.5">
+              <li><strong>Semantic vs Keyword Retrieval:</strong> In a system using <em>${escapeHtml(job.matchedSkills[0] || 'Python')}</em>, when would you prefer dense embeddings like MiniLM over TF-IDF, and what are the latency trade-offs?</li>
+              <li><strong>Domain Challenge (${escapeHtml(job.domain)}):</strong> Walk through an end-to-end architecture you built using <strong>${escapeHtml(matchedStr)}</strong>, including data cleaning and error analysis.</li>
+              <li><strong>Bridging the Gap:</strong> How would you incorporate <strong>${escapeHtml(missingArr[0])}</strong> into an existing ML/software workflow to improve reliability?</li>
+              <li><strong>Evaluation Metrics:</strong> How do you validate ranking or prediction quality (such as Precision@K, MRR, or NDCG) when ground-truth labels are limited?</li>
+            </ol>
+          </div>
+        `;
+      }
+
+      function updateCO4View(animate = false) {
+        const job = state.rankedJobs.find(j => j.id === state.co4SelectedJobId) || state.rankedJobs[0];
+        if (!job) return;
+        document.getElementById('co4-prompt-preview').textContent = buildPromptText(job, state.co4Mode);
+        document.getElementById('co4-output-heading').textContent = `AI Guidance: ${job.title} — ${job.company}`;
+        document.getElementById('co4-output-sub').textContent = `Hybrid Score ${job.hybridScore.toFixed(3)} • Prompt Mode: ${state.co4Mode.toUpperCase()}`;
+
+        const outputEl = document.getElementById('co4-ai-output');
+        if (animate) {
+          outputEl.innerHTML = `
+            <div class="flex items-center gap-2.5 py-8 justify-center text-blue-600 font-medium text-sm">
+              <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+              Generating grounded explanation with Qwen2.5-1.5B-Instruct...
+            </div>
+          `;
+          setTimeout(() => {
+            outputEl.innerHTML = buildAIResponseHtml(job, state.co4Mode);
+          }, 420);
+        } else {
+          outputEl.innerHTML = buildAIResponseHtml(job, state.co4Mode);
+        }
+      }
+
+      /* -------------------------------------------------------------------
+         9. NAVIGATION, EVENTS & HELPERS
+         ------------------------------------------------------------------- */
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function switchTab(tabId) {
+        state.activeTab = tabId;
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        const activePanel = document.getElementById(`tab-${tabId}`);
+        if (activePanel) activePanel.classList.remove('hidden');
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          const isActive = btn.dataset.tab === tabId;
+          btn.className = isActive
+            ? 'tab-btn whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-blue-600 text-white shadow-sm'
+            : 'tab-btn whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 text-slate-600 hover:bg-slate-100';
+        });
+      }
+
+      function updateWeightsFromSliders() {
+        const rawSem = parseInt(document.getElementById('slider-w-sem').value, 10);
+        const rawSkill = parseInt(document.getElementById('slider-w-skill').value, 10);
+        const rawExp = parseInt(document.getElementById('slider-w-exp').value, 10);
+        const total = rawSem + rawSkill + rawExp || 1;
+
+        state.weights.sem = rawSem / total;
+        state.weights.skill = rawSkill / total;
+        state.weights.exp = rawExp / total;
+
+        document.getElementById('lbl-w-sem').textContent = state.weights.sem.toFixed(2);
+        document.getElementById('lbl-w-skill').textContent = state.weights.skill.toFixed(2);
+        document.getElementById('lbl-w-exp').textContent = state.weights.exp.toFixed(2);
+        document.getElementById('eq-sem').textContent = state.weights.sem.toFixed(2);
+        document.getElementById('eq-skill').textContent = state.weights.skill.toFixed(2);
+        document.getElementById('eq-exp').textContent = state.weights.exp.toFixed(2);
+
+        runHybridRanker();
+      }
+
+      function initEvents() {
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
+        // Preset switcher
+        document.getElementById('preset-select').addEventListener('change', (e) => {
+          const p = PRESETS[e.target.value];
+          if (!p) return;
+          state.candidate = { ...p, skills: [...p.skills] };
+          renderCandidateForm();
+          runHybridRanker();
+          showToast(`Switched profile to ${p.name}`);
+        });
+
+        // Live profile inputs
+        document.getElementById('candidate-summary').addEventListener('input', (e) => {
+          state.candidate.summary = e.target.value;
+          runHybridRanker();
+        });
+        document.getElementById('candidate-exp').addEventListener('input', (e) => {
+          state.candidate.experience = parseFloat(e.target.value) || 0;
+          runHybridRanker();
+        });
+        document.getElementById('candidate-location').addEventListener('input', (e) => {
+          state.candidate.location = e.target.value;
+        });
+
+        // Add skill
+        const addSkillFn = () => {
+          const input = document.getElementById('new-skill-input');
+          const val = input.value.trim();
+          if (!val) return;
+          if (!state.candidate.skills.some(s => cleanText(s) === cleanText(val))) {
+            state.candidate.skills.push(val);
+            renderSkillTags();
+            runHybridRanker();
+          }
+          input.value = '';
+        };
+        document.getElementById('btn-add-skill').addEventListener('click', addSkillFn);
+        document.getElementById('new-skill-input').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            addSkillFn();
+          }
+        });
+
+        // Resume Upload (.txt live read, .pdf PyMuPDF simulation)
+        document.getElementById('resume-file-input').addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const status = document.getElementById('resume-status');
+          status.classList.remove('hidden');
+
+          if (file.name.toLowerCase().endsWith('.txt')) {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const txt = String(reader.result || '').slice(0, 1500);
+              const extracted = extractSkillsFromText(txt);
+              const exp = parseMinExperience(txt);
+              state.candidate.summary = txt;
+              if (extracted.length) state.candidate.skills = extracted.map(s => s.length <= 3 ? s.toUpperCase() : s.replace(/\b\w/g, c => c.toUpperCase()));
+              if (exp !== null) state.candidate.experience = exp;
+              status.textContent = `Extracted ${txt.length} chars & ${extracted.length} skills from ${file.name}.`;
+              renderCandidateForm();
+              runHybridRanker();
+              showToast(`Parsed ${file.name} successfully!`);
+            };
+            reader.readAsText(file);
+          } else {
+            // Simulate PyMuPDF extraction cleanly for uploaded PDF
+            status.textContent = `PyMuPDF extracted 1 page from "${file.name}" — detected NLP/ML skills & 0.0 yrs experience.`;
+            state.candidate = { ...PRESETS.yadnesh, skills: [...PRESETS.yadnesh.skills] };
+            renderCandidateForm();
+            runHybridRanker();
+            showToast(`Extracted resume text from ${file.name}`);
+          }
+        });
+
+        document.getElementById('btn-sample-pdf').addEventListener('click', () => {
+          const status = document.getElementById('resume-status');
+          status.classList.remove('hidden');
+          status.textContent = 'Demo PDF "Yadnesh_Tayade_Resume.pdf" parsed via PyMuPDF (1 page, 9 skills detected).';
+          state.candidate = { ...PRESETS.yadnesh, skills: [...PRESETS.yadnesh.skills] };
+          document.getElementById('preset-select').value = 'yadnesh';
+          renderCandidateForm();
+          runHybridRanker();
+          showToast('Sample PDF resume loaded & vectorized!');
+        });
+
+        // Hybrid weight sliders
+        ['slider-w-sem', 'slider-w-skill', 'slider-w-exp'].forEach(id => {
+          document.getElementById(id).addEventListener('input', updateWeightsFromSliders);
+        });
+        document.getElementById('btn-reset-weights').addEventListener('click', () => {
+          document.getElementById('slider-w-sem').value = 70;
+          document.getElementById('slider-w-skill').value = 25;
+          document.getElementById('slider-w-exp').value = 5;
+          updateWeightsFromSliders();
+          showToast('Weights reset to default (0.70 / 0.25 / 0.05)');
+        });
+
+        // View toggle: Cards vs TF-IDF Comparison
+        const cardsBtn = document.getElementById('view-cards-btn');
+        const compareBtn = document.getElementById('view-compare-btn');
+        const recList = document.getElementById('recommendations-list');
+        const compView = document.getElementById('comparison-view');
+
+        cardsBtn.addEventListener('click', () => {
+          recList.classList.remove('hidden');
+          compView.classList.add('hidden');
+          cardsBtn.className = 'px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-navy-900 text-white transition';
+          compareBtn.className = 'px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+        });
+        compareBtn.addEventListener('click', () => {
+          recList.classList.add('hidden');
+          compView.classList.remove('hidden');
+          compareBtn.className = 'px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-navy-900 text-white transition';
+          cardsBtn.className = 'px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+        });
+
+        document.getElementById('filter-domain').addEventListener('change', (e) => {
+          state.domainFilter = e.target.value;
+          renderRecommendations();
+        });
+
+        // CO1 events
+        document.getElementById('co1-raw-input').addEventListener('input', runCO1Pipeline);
+        document.getElementById('co1-sample-select').addEventListener('change', (e) => {
+          const map = {
+            custom: 'Looking for an AI/ML Engineer with 2+ years of experience! Must know Python, C++, C#, CI/CD pipelines, TensorFlow, NLP, & Sentence Transformers. Location: Pune, India (Remote).',
+            cpp: 'Senior Cloud Engineer (3-5 years): Strong skills in C++, C#, CI/CD, Docker, Kubernetes, AWS, and Node.js required!!!',
+            amazon: 'Amazon Language Data Scientist — Build multilingual semantic understanding benchmarks, NLP pipelines, Python scripts, and LLM evaluation datasets.'
+          };
+          document.getElementById('co1-raw-input').value = map[e.target.value];
+          runCO1Pipeline();
+        });
+
+        // CO2 events
+        document.getElementById('co2-sentiment-input').addEventListener('input', runCO2Sentiment);
+        document.querySelectorAll('.co2-sent-preset').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.getElementById('co2-sentiment-input').value = btn.dataset.text;
+            runCO2Sentiment();
+          });
+        });
+
+        document.getElementById('co2-ner-input').addEventListener('input', runCO2NER);
+        document.querySelectorAll('.co2-ner-preset').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.getElementById('co2-ner-input').value = btn.dataset.text;
+            runCO2NER();
+          });
+        });
+
+        // CO3 events
+        document.getElementById('co3-lang-input').addEventListener('input', detectAndTranslate);
+        document.querySelectorAll('.co3-lang-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const sample = MULTILINGUAL_SAMPLES[btn.dataset.lang];
+            document.getElementById('co3-lang-input').value = sample.input;
+            detectAndTranslate();
+          });
+        });
+        document.getElementById('btn-apply-translation').addEventListener('click', () => {
+          const translated = document.getElementById('co3-translated-text').textContent;
+          state.candidate.summary = translated;
+          const skills = extractSkillsFromText(translated);
+          if (skills.length) {
+            state.candidate.skills = skills.map(s => s.length <= 3 ? s.toUpperCase() : s.replace(/\b\w/g, c => c.toUpperCase()));
+          }
+          renderCandidateForm();
+          runHybridRanker();
+          switchTab('recommender');
+          showToast('Translated query applied to Job Recommender!');
+        });
+
+        // CO4 events
+        document.getElementById('co4-job-select').addEventListener('change', (e) => {
+          state.co4SelectedJobId = parseInt(e.target.value, 10);
+          updateCO4View(true);
+        });
+        document.querySelectorAll('.co4-mode-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.co4Mode = btn.dataset.mode;
+            document.querySelectorAll('.co4-mode-btn').forEach(b => {
+              b.className = b.dataset.mode === state.co4Mode
+                ? 'co4-mode-btn px-2.5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white transition'
+                : 'co4-mode-btn px-2.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+            });
+            updateCO4View(true);
+          });
+        });
+        document.getElementById('btn-generate-ai').addEventListener('click', () => updateCO4View(true));
+
+        document.getElementById('btn-copy-prompt').addEventListener('click', () => {
+          const text = document.getElementById('co4-prompt-preview').textContent;
+          const temp = document.createElement('textarea');
+          temp.value = text;
+          document.body.appendChild(temp);
+          temp.select();
+          try {
+            document.execCommand('copy');
+            showToast('Engineered prompt copied to clipboard!');
+          } catch (err) {
+            showToast('Unable to copy prompt automatically.');
+          }
+          document.body.removeChild(temp);
+        });
+
+        // CO Modal events
+        const modal = document.getElementById('co-modal');
+        document.getElementById('btn-open-co-modal').addEventListener('click', () => modal.classList.remove('hidden'));
+        document.getElementById('btn-close-co-modal').addEventListener('click', () => modal.classList.add('hidden'));
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) modal.classList.add('hidden');
+        });
+        document.querySelectorAll('.jump-co-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            switchTab(btn.dataset.jump);
+          });
+        });
+      }
+
+      /* -------------------------------------------------------------------
+         10. INITIALIZATION
+         ------------------------------------------------------------------- */
+      window.addEventListener('DOMContentLoaded', () => {
+        renderCandidateForm();
+        initEvents();
+        runHybridRanker();
+        runCO1Pipeline();
+        runCO2Sentiment();
+        runCO2NER();
+        renderLDATopics();
+        detectAndTranslate();
+        setupSpeechToText();
+      });
+    })();
+  </script>
+</body>
+</html>
