@@ -2,6 +2,8 @@
 
 An AI-powered job recommendation system that matches a candidate's profile with relevant job postings using semantic similarity, skill matching, experience compatibility, and hybrid ranking. It also uses an open-source Large Language Model (LLM) to generate personalized explanations for recommended jobs and suggest areas for skill development.
 
+DEPLOYED LINK : https://eclectic-brigadeiros-6ece13.netlify.app/
+
 ## Project Overview
 
 Finding suitable job opportunities can be difficult when job descriptions and candidate profiles contain different wording for similar skills and responsibilities. Keyword-only search may miss relevant opportunities because it does not always understand the meaning of the text.
